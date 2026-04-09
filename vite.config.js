@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  base: '/namma-transport/',
+  base: process.env.GITHUB_PAGES ? '/namma-transport/' : '/',
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {

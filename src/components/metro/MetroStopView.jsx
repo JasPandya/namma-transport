@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, Train, RefreshCw, Bell, BellOff, Clock, CheckCircle } from 'lucide-react';
 import { getStation, getTrainETAs } from '../../services/metroService';
 import ETABadge from '../common/ETABadge';
+import TrainProgressTrack from './TrainProgressTrack';
 import useReminder from '../../hooks/useReminder';
 
 export default function MetroStopView({ stationId, onBack }) {
@@ -51,6 +52,7 @@ export default function MetroStopView({ stationId, onBack }) {
   }
 
   const lineColor = station.line === 'purple' ? 'text-purple-400' : 'text-green-400';
+  const lineHex = station.line === 'purple' ? '#9333ea' : '#16a34a';
   const lineBg = station.line === 'purple' ? 'bg-purple-600' : 'bg-green-600';
   const lineBorder = station.line === 'purple' ? 'border-purple-600/30' : 'border-green-600/30';
   const lineBgLight = station.line === 'purple' ? 'bg-purple-600/10' : 'bg-green-600/10';
@@ -117,6 +119,7 @@ export default function MetroStopView({ stationId, onBack }) {
                   <ETABadge minutes={train.eta} />
                 </div>
               </div>
+              <TrainProgressTrack eta={train.eta} lineColor={lineHex} />
               {hasReminder && (
                 <div className="flex items-center gap-1.5 mt-2 text-xs text-purple-400">
                   <CheckCircle className="w-3 h-3" />

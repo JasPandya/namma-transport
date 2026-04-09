@@ -49,3 +49,21 @@ body {
 .animate-fade-in {
   animation: fade-in 0.2s ease-out;
 }
+
+@keyframes train-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.animate-train-bob {
+  animation: train-bob 1.8s ease-in-out infinite;
+}
+
+@keyframes train-arrive {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+}
+
+.animate-train-arrive {
+  animation: train-arrive 0.8s ease-in-out infinite;
+}

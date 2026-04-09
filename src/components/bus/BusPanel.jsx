@@ -29,7 +29,10 @@ export default function BusPanel() {
   const [activeSearchMode, setActiveSearchMode] = useState(() => getSession('nt:bus:searchMode', 'route'));
   const [favoriteQuery, setFavoriteQuery] = useState('');
   const debounceRef = useRef(null);
+  const viewRef = useRef(view);
   const { favorites, addFavorite, removeFavorite, isFavorite } = useFavorites();
+
+  useEffect(() => { viewRef.current = view; }, [view]);
 
   const doStopSearch = useCallback(async (q) => {
     if (!q || q.trim().length < 3) {
@@ -51,6 +54,13 @@ export default function BusPanel() {
     return () => clearTimeout(debounceRef.current);
   }, [stopQuery, doStopSearch]);
 
+  const handleBack = useCallback(() => {
+    setSelectedStop(null);
+    setView('search');
+    setSession('nt:bus:selectedStop', null);
+    setSession('nt:bus:view', 'search');
+  }, []);
+
   const handleSelectStop = (stop) => {
     const stopData = typeof stop === 'string'
       ? { stationName: stop }
@@ -59,13 +69,7 @@ export default function BusPanel() {
     setView('stop');
     setSession('nt:bus:selectedStop', stopData);
     setSession('nt:bus:view', 'stop');
-  };
-
-  const handleBack = () => {
-    setSelectedStop(null);
-    setView('search');
-    setSession('nt:bus:selectedStop', null);
-    setSession('nt:bus:view', 'search');
+    window.history.pushState({ ntView: 'bus-stop' }, '');
   };
 
   const handleSearchModeChange = (mode) => {
@@ -73,78 +77,103 @@ export default function BusPanel() {
     setSession('nt:bus:searchMode', mode);
   };
 
-  if (view === 'stop' && selectedStop) {
-    return <BusStopView stop={selectedStop} onBack={handleBack} />;
-  }
+  // Handle phone back gesture / browser back button
+  useEffect(() => {
+    const onPopState = () => {
+      if (viewRef.current === 'stop') {
+        handleBack();
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [handleBack]);
+
+  // If app loads directly into stop view (page refresh), push a history entry
+  // so the phone back gesture works
+  useEffect(() => {
+    if (view === 'stop' && selectedStop) {
+      window.history.pushState({ ntView: 'bus-stop' }, '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const isStopView = view === 'stop' && selectedStop;
 
   return (
-    <div className="space-y-4">
-      <FavoriteRoutes
-        favorites={favorites}
-        onSelectRoute={(fav) => {
-          handleSearchModeChange('route');
-          setFavoriteQuery(fav.routeNo);
-        }}
-        onRemoveFavorite={removeFavorite}
-      />
+    <div>
+      {/* Keep search UI mounted so route/stop list state is preserved on back */}
+      <div className="space-y-4" style={{ display: isStopView ? 'none' : undefined }}>
+        <FavoriteRoutes
+          favorites={favorites}
+          onSelectRoute={(fav) => {
+            handleSearchModeChange('route');
+            setFavoriteQuery(fav.routeNo);
+          }}
+          onRemoveFavorite={removeFavorite}
+        />
 
-      <div className="flex gap-2">
-        <button
-          onClick={() => handleSearchModeChange('route')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-            activeSearchMode === 'route'
-              ? 'bg-bus-orange/20 text-bus-orange border border-bus-orange/30'
-              : 'bg-surface-card text-slate-400 border border-surface-border hover:text-slate-300'
-          }`}
-        >
-          <Route className="w-3.5 h-3.5" />
-          Search by Route
-        </button>
-        <button
-          onClick={() => handleSearchModeChange('stop')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-            activeSearchMode === 'stop'
-              ? 'bg-bus-orange/20 text-bus-orange border border-bus-orange/30'
-              : 'bg-surface-card text-slate-400 border border-surface-border hover:text-slate-300'
-          }`}
-        >
-          <MapPin className="w-3.5 h-3.5" />
-          Search by Stop
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleSearchModeChange('route')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              activeSearchMode === 'route'
+                ? 'bg-bus-orange/20 text-bus-orange border border-bus-orange/30'
+                : 'bg-surface-card text-slate-400 border border-surface-border hover:text-slate-300'
+            }`}
+          >
+            <Route className="w-3.5 h-3.5" />
+            Search by Route
+          </button>
+          <button
+            onClick={() => handleSearchModeChange('stop')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              activeSearchMode === 'stop'
+                ? 'bg-bus-orange/20 text-bus-orange border border-bus-orange/30'
+                : 'bg-surface-card text-slate-400 border border-surface-border hover:text-slate-300'
+            }`}
+          >
+            <MapPin className="w-3.5 h-3.5" />
+            Search by Stop
+          </button>
+        </div>
+
+        {activeSearchMode === 'route' ? (
+          <BusRouteSearch
+            onSelectStop={handleSelectStop}
+            addFavorite={addFavorite}
+            removeFavorite={removeFavorite}
+            isFavorite={isFavorite}
+            defaultQuery={favoriteQuery}
+          />
+        ) : (
+          <div className="space-y-4">
+            <SearchBar
+              placeholder="Search bus stop (e.g., Majestic, Silk Board)..."
+              value={stopQuery}
+              onChange={setStopQuery}
+              suggestions={stopSuggestions}
+              onSelect={(stop) => handleSelectStop(stop)}
+              icon={MapPin}
+            />
+            {searchingStops && (
+              <div className="flex items-center justify-center py-4 gap-2 text-slate-400">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-xs">Searching stops...</span>
+              </div>
+            )}
+            {!stopQuery && !searchingStops && (
+              <div className="text-center py-8">
+                <MapPin className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                <p className="text-slate-400 text-sm">Search for a bus stop</p>
+                <p className="text-slate-600 text-xs mt-1">Minimum 3 characters to search</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {activeSearchMode === 'route' ? (
-        <BusRouteSearch
-          onSelectStop={handleSelectStop}
-          addFavorite={addFavorite}
-          removeFavorite={removeFavorite}
-          isFavorite={isFavorite}
-          defaultQuery={favoriteQuery}
-        />
-      ) : (
-        <div className="space-y-4">
-          <SearchBar
-            placeholder="Search bus stop (e.g., Majestic, Silk Board)..."
-            value={stopQuery}
-            onChange={setStopQuery}
-            suggestions={stopSuggestions}
-            onSelect={(stop) => handleSelectStop(stop)}
-            icon={MapPin}
-          />
-          {searchingStops && (
-            <div className="flex items-center justify-center py-4 gap-2 text-slate-400">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span className="text-xs">Searching stops...</span>
-            </div>
-          )}
-          {!stopQuery && !searchingStops && (
-            <div className="text-center py-8">
-              <MapPin className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-              <p className="text-slate-400 text-sm">Search for a bus stop</p>
-              <p className="text-slate-600 text-xs mt-1">Minimum 3 characters to search</p>
-            </div>
-          )}
-        </div>
+      {isStopView && (
+        <BusStopView stop={selectedStop} onBack={handleBack} />
       )}
     </div>
   );

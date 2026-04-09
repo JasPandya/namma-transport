@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Train, Search } from 'lucide-react';
 import { metroLines } from '../../data/metroData';
 import { searchStations } from '../../services/metroService';
@@ -24,25 +24,48 @@ export default function MetroPanel() {
   const [selectedLine, setSelectedLine] = useState(() => getSession('nt:metro:line', 'purple'));
   const [selectedStation, setSelectedStation] = useState(() => getSession('nt:metro:station', null));
   const [searchQuery, setSearchQuery] = useState('');
+  const viewRef = useRef(view);
+
+  useEffect(() => { viewRef.current = view; }, [view]);
+
+  const handleBack = useCallback(() => {
+    setSelectedStation(null);
+    setView('lines');
+    setSession('nt:metro:station', null);
+    setSession('nt:metro:view', 'lines');
+  }, []);
 
   const handleSelectStation = (stationId) => {
     setSelectedStation(stationId);
     setView('station');
     setSession('nt:metro:station', stationId);
     setSession('nt:metro:view', 'station');
-  };
-
-  const handleBack = () => {
-    setSelectedStation(null);
-    setView('lines');
-    setSession('nt:metro:station', null);
-    setSession('nt:metro:view', 'lines');
+    window.history.pushState({ ntView: 'metro-station' }, '');
   };
 
   const handleLineChange = (lineId) => {
     setSelectedLine(lineId);
     setSession('nt:metro:line', lineId);
   };
+
+  // Handle phone back gesture / browser back button
+  useEffect(() => {
+    const onPopState = () => {
+      if (viewRef.current === 'station') {
+        handleBack();
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [handleBack]);
+
+  // If app loads directly into station view (page refresh), push a history entry
+  useEffect(() => {
+    if (view === 'station' && selectedStation) {
+      window.history.pushState({ ntView: 'metro-station' }, '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (view === 'station' && selectedStation) {
     return <MetroStopView stationId={selectedStation} onBack={handleBack} />;

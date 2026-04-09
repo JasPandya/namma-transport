@@ -5,13 +5,26 @@ import BusRouteSearch from './BusRouteSearch';
 import BusStopView from './BusStopView';
 import { searchStops } from '../../services/busService';
 
+function getSession(key, fallback) {
+  try {
+    const val = sessionStorage.getItem(key);
+    return val ? JSON.parse(val) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function setSession(key, value) {
+  sessionStorage.setItem(key, JSON.stringify(value));
+}
+
 export default function BusPanel() {
-  const [view, setView] = useState('search');
-  const [selectedStop, setSelectedStop] = useState(null);
+  const [view, setView] = useState(() => getSession('nt:bus:view', 'search'));
+  const [selectedStop, setSelectedStop] = useState(() => getSession('nt:bus:selectedStop', null));
   const [stopQuery, setStopQuery] = useState('');
   const [stopSuggestions, setStopSuggestions] = useState([]);
   const [searchingStops, setSearchingStops] = useState(false);
-  const [activeSearchMode, setActiveSearchMode] = useState('route');
+  const [activeSearchMode, setActiveSearchMode] = useState(() => getSession('nt:bus:searchMode', 'route'));
   const debounceRef = useRef(null);
 
   const doStopSearch = useCallback(async (q) => {
@@ -40,11 +53,20 @@ export default function BusPanel() {
       : stop;
     setSelectedStop(stopData);
     setView('stop');
+    setSession('nt:bus:selectedStop', stopData);
+    setSession('nt:bus:view', 'stop');
   };
 
   const handleBack = () => {
     setSelectedStop(null);
     setView('search');
+    setSession('nt:bus:selectedStop', null);
+    setSession('nt:bus:view', 'search');
+  };
+
+  const handleSearchModeChange = (mode) => {
+    setActiveSearchMode(mode);
+    setSession('nt:bus:searchMode', mode);
   };
 
   if (view === 'stop' && selectedStop) {
@@ -55,7 +77,7 @@ export default function BusPanel() {
     <div className="space-y-4">
       <div className="flex gap-2">
         <button
-          onClick={() => setActiveSearchMode('route')}
+          onClick={() => handleSearchModeChange('route')}
           className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium transition-all cursor-pointer ${
             activeSearchMode === 'route'
               ? 'bg-bus-orange/20 text-bus-orange border border-bus-orange/30'
@@ -66,7 +88,7 @@ export default function BusPanel() {
           Search by Route
         </button>
         <button
-          onClick={() => setActiveSearchMode('stop')}
+          onClick={() => handleSearchModeChange('stop')}
           className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium transition-all cursor-pointer ${
             activeSearchMode === 'stop'
               ? 'bg-bus-orange/20 text-bus-orange border border-bus-orange/30'

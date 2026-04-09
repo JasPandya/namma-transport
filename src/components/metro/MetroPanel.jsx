@@ -6,20 +6,42 @@ import SearchBar from '../common/SearchBar';
 import MetroLineMap from './MetroLineMap';
 import MetroStopView from './MetroStopView';
 
+function getSession(key, fallback) {
+  try {
+    const val = sessionStorage.getItem(key);
+    return val ? JSON.parse(val) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function setSession(key, value) {
+  sessionStorage.setItem(key, JSON.stringify(value));
+}
+
 export default function MetroPanel() {
-  const [view, setView] = useState('lines');
-  const [selectedLine, setSelectedLine] = useState('purple');
-  const [selectedStation, setSelectedStation] = useState(null);
+  const [view, setView] = useState(() => getSession('nt:metro:view', 'lines'));
+  const [selectedLine, setSelectedLine] = useState(() => getSession('nt:metro:line', 'purple'));
+  const [selectedStation, setSelectedStation] = useState(() => getSession('nt:metro:station', null));
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSelectStation = (stationId) => {
     setSelectedStation(stationId);
     setView('station');
+    setSession('nt:metro:station', stationId);
+    setSession('nt:metro:view', 'station');
   };
 
   const handleBack = () => {
     setSelectedStation(null);
     setView('lines');
+    setSession('nt:metro:station', null);
+    setSession('nt:metro:view', 'lines');
+  };
+
+  const handleLineChange = (lineId) => {
+    setSelectedLine(lineId);
+    setSession('nt:metro:line', lineId);
   };
 
   if (view === 'station' && selectedStation) {
@@ -48,7 +70,7 @@ export default function MetroPanel() {
         {Object.entries(metroLines).map(([id, l]) => (
           <button
             key={id}
-            onClick={() => setSelectedLine(id)}
+            onClick={() => handleLineChange(id)}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-medium transition-all cursor-pointer border ${
               selectedLine === id
                 ? id === 'purple'

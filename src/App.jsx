@@ -5,14 +5,28 @@ import BusPanel from './components/bus/BusPanel';
 import MetroPanel from './components/metro/MetroPanel';
 import useReminder from './hooks/useReminder';
 
+function getSessionState(key, fallback) {
+  try {
+    const val = sessionStorage.getItem(key);
+    return val ? JSON.parse(val) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 function App() {
-  const [activeTab, setActiveTab] = useState('bus');
+  const [activeTab, setActiveTab] = useState(() => getSessionState('nt:activeTab', 'bus'));
   const { activeReminders } = useReminder();
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    sessionStorage.setItem('nt:activeTab', JSON.stringify(tab));
+  };
 
   return (
     <div className="min-h-screen bg-surface">
       <Header activeReminders={activeReminders.length} />
-      <TabNav activeTab={activeTab} onTabChange={setActiveTab} />
+      <TabNav activeTab={activeTab} onTabChange={handleTabChange} />
 
       <main className="max-w-5xl mx-auto px-4 py-5">
         {activeTab === 'bus' ? <BusPanel /> : <MetroPanel />}

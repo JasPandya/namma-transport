@@ -160,7 +160,19 @@ export default function BusRouteSearch({ onSelectStop }) {
                               key={stop.stationId}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onSelectStop({ stationId: stop.stationId, stationName: stop.stationName });
+                                const routeNo = results.find(r => r.routeParentId === expandedRoute)?.routeNo;
+                                onSelectStop({
+                                  stationId: stop.stationId,
+                                  stationName: stop.stationName,
+                                  routeContext: {
+                                    routeNo,
+                                    routeParentId: expandedRoute,
+                                    direction: activeDirection,
+                                    from: stop.from,
+                                    to: stop.to,
+                                    vehicles: getActiveVehiclesForStop(stop),
+                                  },
+                                });
                               }}
                               className="w-full flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-surface-hover transition-colors cursor-pointer group"
                             >

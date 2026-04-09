@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MapPin, Bus, RefreshCw, ArrowLeft, Loader2, Clock, Navigation } from 'lucide-react';
-import { searchStops, getRouteDetails, getActiveVehiclesForStop } from '../../services/busService';
+import { getActiveVehiclesForStop } from '../../services/busService';
 import * as bmtcApi from '../../services/bmtcApi';
 import ETABadge from '../common/ETABadge';
 
@@ -12,6 +12,84 @@ export default function BusStopView({ stop, onBack }) {
   const [error, setError] = useState(null);
 
   const stationName = typeof stop === 'string' ? stop : stop?.stationName || '';
+  const stationId = typeof stop === 'string' ? null : stop?.stationId;
+  const routeContext = typeof stop === 'string' ? null : stop?.routeContext;
+
+  const fetchRouteFromContext = async () => {
+    if (!routeContext?.routeParentId) return null;
+    try {
+      const details = await bmtcApi.getRouteDetails(routeContext.routeParentId);
+      const dir = routeContext.direction || 'up';
+      const allStops = [...(details[dir]?.stops || [])];
+      const matchingStop = allStops.find(
+        (s) => s.stationId === stationId || s.stationName === stationName
+      ) || allStops.find(
+        (s) => s.stationName.toLowerCase().includes(stationName.toLowerCase())
+      );
+      if (matchingStop) {
+        return {
+          routeNo: routeContext.routeNo,
+          routeParentId: routeContext.routeParentId,
+          from: matchingStop.from,
+          to: matchingStop.to,
+          vehicles: getActiveVehiclesForStop(matchingStop),
+        };
+      }
+    } catch (err) {
+      console.error('Failed to refresh route context:', err);
+    }
+    return null;
+  };
+
+  const discoverRoutes = async () => {
+    const discovered = [];
+    const stopResults = await bmtcApi.searchStops(stationName);
+    if (stopResults.length === 0) return discovered;
+
+    const targetId = stationId || stopResults[0]?.stationId;
+    const targetName = stationName.toLowerCase();
+
+    // Try getting timetable data to discover route numbers
+    if (targetId) {
+      try {
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        const timetable = await bmtcApi.getTimetableByStation(targetId, 0, dateStr, dateStr);
+        const routeIds = [...new Set(timetable.map((t) => t.routeId))].slice(0, 8);
+
+        const routePromises = routeIds.map(async (routeId) => {
+          try {
+            const details = await bmtcApi.getRouteDetails(routeId);
+            const allStops = [...(details.up?.stops || []), ...(details.down?.stops || [])];
+            const matchingStop = allStops.find(
+              (s) => s.stationId === targetId ||
+                     s.stationName.toLowerCase().includes(targetName) ||
+                     targetName.includes(s.stationName.toLowerCase())
+            );
+            if (matchingStop) {
+              const timetableEntry = timetable.find((t) => t.routeId === routeId);
+              return {
+                routeNo: timetableEntry?.routeNo || matchingStop.routeNo,
+                routeParentId: routeId,
+                from: matchingStop.from,
+                to: matchingStop.to,
+                vehicles: getActiveVehiclesForStop(matchingStop),
+              };
+            }
+            return null;
+          } catch {
+            return null;
+          }
+        });
+
+        discovered.push(...(await Promise.all(routePromises)).filter(Boolean));
+      } catch (err) {
+        console.error('Timetable discovery failed:', err);
+      }
+    }
+
+    return discovered;
+  };
 
   const fetchRoutes = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -19,40 +97,25 @@ export default function BusStopView({ stop, onBack }) {
     setError(null);
 
     try {
-      const stopResults = await bmtcApi.searchStops(stationName);
-      if (stopResults.length === 0) {
-        setRoutes([]);
-        return;
+      const allRoutes = [];
+
+      // If we have route context (came from route view), fetch that route first
+      if (routeContext) {
+        const ctxRoute = await fetchRouteFromContext();
+        if (ctxRoute) allRoutes.push(ctxRoute);
       }
 
-      const searchResults = await bmtcApi.searchRoutes(stationName.split(' ')[0]);
-      
-      const routePromises = searchResults.slice(0, 8).map(async (r) => {
-        try {
-          const details = await bmtcApi.getRouteDetails(r.routeParentId);
-          const allStops = [...(details.up?.stops || []), ...(details.down?.stops || [])];
-          const matchingStop = allStops.find(
-            (s) => s.stationName.toLowerCase().includes(stationName.toLowerCase()) ||
-                   stationName.toLowerCase().includes(s.stationName.toLowerCase())
-          );
-          if (matchingStop) {
-            const vehicles = getActiveVehiclesForStop(matchingStop);
-            return {
-              routeNo: r.routeNo,
-              routeParentId: r.routeParentId,
-              from: matchingStop.from,
-              to: matchingStop.to,
-              vehicles,
-            };
-          }
-          return null;
-        } catch {
-          return null;
+      // Try to discover additional routes through this stop
+      const discovered = await discoverRoutes();
+      const existingIds = new Set(allRoutes.map((r) => r.routeParentId));
+      for (const r of discovered) {
+        if (!existingIds.has(r.routeParentId)) {
+          allRoutes.push(r);
+          existingIds.add(r.routeParentId);
         }
-      });
+      }
 
-      const resolvedRoutes = (await Promise.all(routePromises)).filter(Boolean);
-      setRoutes(resolvedRoutes);
+      setRoutes(allRoutes);
       setLastUpdated(new Date());
     } catch (err) {
       setError('Failed to fetch bus data. Please try again.');

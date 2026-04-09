@@ -1,0 +1,93 @@
+export const metroLines = {
+  purple: {
+    id: 'purple',
+    name: 'Purple Line',
+    color: '#9333ea',
+    stations: [
+      { id: 'p-challaghatta', name: 'Challaghatta', code: 'CGA' },
+      { id: 'p-kengeri', name: 'Kengeri', code: 'KGI' },
+      { id: 'p-kengeri-bus', name: 'Kengeri Bus Terminal', code: 'KBT' },
+      { id: 'p-pattanagere', name: 'Pattanagere', code: 'PGE' },
+      { id: 'p-jnanabharathi', name: 'Jnanabharathi', code: 'JNB' },
+      { id: 'p-rajarajeshwari', name: 'Rajarajeshwari Nagar', code: 'RRN' },
+      { id: 'p-nayandahalli', name: 'Nayandahalli', code: 'NYD' },
+      { id: 'p-mysore-road', name: 'Mysore Road', code: 'MYR' },
+      { id: 'p-deepanjali', name: 'Deepanjali Nagar', code: 'DPN' },
+      { id: 'p-attiguppe', name: 'Attiguppe', code: 'AGP' },
+      { id: 'p-vijayanagar', name: 'Vijayanagar', code: 'VJN' },
+      { id: 'p-hosahalli', name: 'Hosahalli', code: 'HSH' },
+      { id: 'p-magadi-road', name: 'Magadi Road', code: 'MGR' },
+      { id: 'p-city-railway', name: 'KSR City Railway Station', code: 'KSR' },
+      { id: 'p-majestic', name: 'Nadaprabhu Kempegowda (Majestic)', code: 'MJC', interchange: 'green' },
+      { id: 'p-vidhana-soudha', name: 'Sir M. Visveshwaraya (Vidhana Soudha)', code: 'VDS' },
+      { id: 'p-central-college', name: 'Central College', code: 'CCG' },
+      { id: 'p-mg-road', name: 'MG Road', code: 'MGD' },
+      { id: 'p-trinity', name: 'Trinity', code: 'TRN' },
+      { id: 'p-halasuru', name: 'Halasuru', code: 'HLR' },
+      { id: 'p-indiranagar', name: 'Indiranagar', code: 'INR' },
+      { id: 'p-swami-vivekananda', name: 'Swami Vivekananda Road', code: 'SVR' },
+      { id: 'p-baiyappanahalli', name: 'Baiyappanahalli', code: 'BYP' },
+    ],
+  },
+  green: {
+    id: 'green',
+    name: 'Green Line',
+    color: '#16a34a',
+    stations: [
+      { id: 'g-silk-institute', name: 'Silk Institute', code: 'SLI' },
+      { id: 'g-thalaghattapura', name: 'Thalaghattapura', code: 'THP' },
+      { id: 'g-vajarahalli', name: 'Vajarahalli', code: 'VJH' },
+      { id: 'g-doddakallasandra', name: 'Doddakallasandra', code: 'DKS' },
+      { id: 'g-konanakunte', name: 'Konanakunte Cross', code: 'KKC' },
+      { id: 'g-yelachenahalli', name: 'Yelachenahalli', code: 'YCH' },
+      { id: 'g-jp-nagar', name: 'JP Nagar', code: 'JPN' },
+      { id: 'g-banashankari', name: 'Banashankari', code: 'BSK' },
+      { id: 'g-rv-road', name: 'RV Road', code: 'RVR' },
+      { id: 'g-jayanagar', name: 'Jayanagar', code: 'JYN' },
+      { id: 'g-south-end', name: 'South End Circle', code: 'SEC' },
+      { id: 'g-lalbagh', name: 'Lalbagh', code: 'LBG' },
+      { id: 'g-national-college', name: 'National College', code: 'NCG' },
+      { id: 'g-kr-market', name: 'Krishna Rajendra Market', code: 'KRM' },
+      { id: 'g-chickpete', name: 'Chickpete', code: 'CKP' },
+      { id: 'g-majestic', name: 'Nadaprabhu Kempegowda (Majestic)', code: 'MJC', interchange: 'purple' },
+      { id: 'g-srirampura', name: 'Srirampura', code: 'SRP' },
+      { id: 'g-sampige-road', name: 'Sampige Road', code: 'SPR' },
+      { id: 'g-kuvempu-road', name: 'Kuvempu Road', code: 'KVR' },
+      { id: 'g-rajajinagar', name: 'Rajajinagar', code: 'RJN' },
+      { id: 'g-mahalakshmi', name: 'Mahalakshmi', code: 'MHL' },
+      { id: 'g-sandal-soap', name: 'Sandal Soap Factory', code: 'SSF' },
+      { id: 'g-yeshwanthpur', name: 'Yeshwanthpur', code: 'YSP' },
+      { id: 'g-goraguntepalya', name: 'Goraguntepalya', code: 'GGP' },
+      { id: 'g-peenya', name: 'Peenya', code: 'PNY' },
+      { id: 'g-peenya-industry', name: 'Peenya Industry', code: 'PNI' },
+      { id: 'g-jalahalli', name: 'Jalahalli', code: 'JLH' },
+      { id: 'g-dasarahalli', name: 'Dasarahalli', code: 'DSH' },
+      { id: 'g-nagasandra', name: 'Nagasandra', code: 'NGS' },
+    ],
+  },
+};
+
+export const metroSchedule = {
+  weekday: {
+    firstTrain: '05:00',
+    lastTrain: '23:00',
+    peakHours: [
+      { start: '07:00', end: '10:00', frequency: 5 },
+      { start: '17:00', end: '20:00', frequency: 5 },
+    ],
+    offPeakFrequency: 10,
+  },
+  weekend: {
+    firstTrain: '06:00',
+    lastTrain: '23:00',
+    peakHours: [
+      { start: '10:00', end: '13:00', frequency: 7 },
+      { start: '17:00', end: '20:00', frequency: 7 },
+    ],
+    offPeakFrequency: 12,
+  },
+};
+
+export const travelTimeBetweenStations = 2;
+
+export default metroLines;

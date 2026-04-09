@@ -161,7 +161,7 @@ export default function RouteMap({ stops = [], vehicles = [], selectedStopId, ro
                     style={{
                       fontWeight: 600,
                       fontSize: 13,
-                      color: '#f1f5f9',
+                      color: '#1e293b',
                       marginBottom: 2,
                     }}
                   >
@@ -207,7 +207,7 @@ export default function RouteMap({ stops = [], vehicles = [], selectedStopId, ro
                   style={{
                     fontWeight: 600,
                     fontSize: 13,
-                    color: '#f1f5f9',
+                    color: '#1e293b',
                     marginBottom: 4,
                   }}
                 >
@@ -217,7 +217,7 @@ export default function RouteMap({ stops = [], vehicles = [], selectedStopId, ro
                   <div
                     style={{
                       fontSize: 10,
-                      color: '#94a3b8',
+                      color: '#64748b',
                       marginBottom: 4,
                     }}
                   >

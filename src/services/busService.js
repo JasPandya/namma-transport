@@ -1,93 +1,101 @@
-import busRoutes from '../data/busRoutes';
+import * as bmtcApi from './bmtcApi';
 
-export function searchRoutes(query) {
+export async function searchRoutes(query) {
   if (!query || query.trim().length === 0) return [];
-  const q = query.toLowerCase().trim();
-  return busRoutes.filter(
-    (r) =>
-      r.number.toLowerCase().includes(q) ||
-      r.name.toLowerCase().includes(q) ||
-      r.stops.some((s) => s.toLowerCase().includes(q))
-  );
-}
-
-export function getRouteById(routeId) {
-  return busRoutes.find((r) => r.id === routeId) || null;
-}
-
-export function getRoutesAtStop(stopName) {
-  return busRoutes.filter((r) =>
-    r.stops.some((s) => s.toLowerCase() === stopName.toLowerCase())
-  );
-}
-
-export function getAllStopNames() {
-  const stops = new Set();
-  busRoutes.forEach((r) => r.stops.forEach((s) => stops.add(s)));
-  return Array.from(stops).sort();
-}
-
-function parseTime(timeStr) {
-  const [h, m] = timeStr.split(':').map(Number);
-  return h * 60 + m;
-}
-
-function generateBusETAs(route, stopName) {
-  const now = new Date();
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  const firstBus = parseTime(route.firstBus);
-  const lastBus = parseTime(route.lastBus);
-
-  if (currentMinutes < firstBus || currentMinutes > lastBus) {
+  try {
+    return await bmtcApi.searchRoutes(query);
+  } catch (err) {
+    console.error('Failed to search routes:', err);
     return [];
   }
+}
 
-  const stopIndex = route.stops.findIndex(
-    (s) => s.toLowerCase() === stopName.toLowerCase()
-  );
-  if (stopIndex === -1) return [];
+export async function searchStops(query) {
+  if (!query || query.trim().length < 3) return [];
+  try {
+    return await bmtcApi.searchStops(query);
+  } catch (err) {
+    console.error('Failed to search stops:', err);
+    return [];
+  }
+}
 
-  const stopOffset = stopIndex * 4;
-  const etas = [];
-  const jitter = ((route.id.charCodeAt(0) + now.getMinutes()) % 5) - 2;
+export async function getRouteDetails(routeParentId) {
+  try {
+    return await bmtcApi.getRouteDetails(routeParentId);
+  } catch (err) {
+    console.error('Failed to get route details:', err);
+    return { up: { stops: [], vehicles: [] }, down: { stops: [], vehicles: [] } };
+  }
+}
 
-  for (let i = 0; i < 5; i++) {
-    const eta = Math.max(
-      1,
-      (route.frequency * i) - (currentMinutes % route.frequency) + stopOffset + jitter + Math.floor(Math.random() * 3)
-    );
-    if (eta < 120) {
-      etas.push({
-        id: `${route.id}-bus-${i}`,
-        routeNumber: route.number,
-        routeName: route.name,
-        routeType: route.type,
-        eta: Math.round(eta),
-        stopName,
-        vehicleId: `KA-${51 + (i % 9)}F-${1000 + ((route.id.charCodeAt(0) * 100 + i * 37) % 9000)}`,
-        occupancy: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)],
-      });
+export async function getVehicleTrip(vehicleId) {
+  try {
+    return await bmtcApi.getVehicleTrip(vehicleId);
+  } catch (err) {
+    console.error('Failed to get vehicle trip:', err);
+    return { routeDetails: [], liveLocation: null };
+  }
+}
+
+export function parseETA(etaString) {
+  if (!etaString || etaString.trim() === '') return null;
+  try {
+    const etaDate = new Date(etaString);
+    const now = new Date();
+    const diffMs = etaDate.getTime() - now.getTime();
+    const diffMin = Math.round(diffMs / 60000);
+    return diffMin > 0 ? diffMin : null;
+  } catch {
+    return null;
+  }
+}
+
+export function parseTimeToMinutes(timeStr) {
+  if (!timeStr || timeStr.trim() === '') return null;
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return null;
+  return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+}
+
+export function getETAMinutes(vehicle, stationId) {
+  if (vehicle.eta && vehicle.eta.trim() !== '') {
+    const parsed = parseETA(vehicle.eta);
+    if (parsed !== null) return parsed;
+  }
+  if (vehicle.scheduledArrival) {
+    const now = new Date();
+    const currentMin = now.getHours() * 60 + now.getMinutes();
+    const schMin = parseTimeToMinutes(vehicle.scheduledArrival);
+    if (schMin !== null) {
+      const diff = schMin - currentMin;
+      return diff > 0 ? diff : null;
     }
   }
-
-  return etas.sort((a, b) => a.eta - b.eta);
+  return null;
 }
 
-export function getBusETAsForRoute(routeId, stopName) {
-  const route = getRouteById(routeId);
-  if (!route) return [];
-  return generateBusETAs(route, stopName);
+export function formatVehicleForDisplay(vehicle, stop) {
+  const etaMin = getETAMinutes(vehicle, stop?.stationId);
+  return {
+    vehicleId: vehicle.vehicleId,
+    vehicleNumber: vehicle.vehicleNumber,
+    serviceType: vehicle.serviceType,
+    eta: etaMin,
+    scheduledArrival: vehicle.scheduledArrival,
+    actualArrival: vehicle.actualArrival,
+    lat: vehicle.lat,
+    lng: vehicle.lng,
+    heading: vehicle.heading,
+    lastRefresh: vehicle.lastRefresh,
+    hasPassed: vehicle.stopCoveredStatus === 1 && (!vehicle.eta || vehicle.eta.trim() === ''),
+  };
 }
 
-export function getBusETAsAtStop(stopName) {
-  const routes = getRoutesAtStop(stopName);
-  const allETAs = routes.flatMap((r) => generateBusETAs(r, stopName));
-  return allETAs.sort((a, b) => a.eta - b.eta);
-}
-
-export function getStopSuggestions(query) {
-  if (!query || query.trim().length < 2) return [];
-  const q = query.toLowerCase().trim();
-  const allStops = getAllStopNames();
-  return allStops.filter((s) => s.toLowerCase().includes(q));
+export function getActiveVehiclesForStop(stop) {
+  if (!stop || !stop.vehicleDetails) return [];
+  return stop.vehicleDetails
+    .map((v) => formatVehicleForDisplay(v, stop))
+    .filter((v) => v.eta !== null && !v.hasPassed)
+    .sort((a, b) => a.eta - b.eta);
 }

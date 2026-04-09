@@ -71,7 +71,7 @@ export function getTrainETAs(stationId, direction = 'both') {
     const trains = [];
     for (let i = 0; i < 6; i++) {
       const baseEta = (frequency * i) - (currentMinutes % frequency) + (offset % frequency);
-      const eta = Math.max(1, Math.round(baseEta + (Math.random() * 2 - 1)));
+      const eta = Math.max(1, Math.round(baseEta));
       if (eta < 90) {
         const destination = dirLabel === 'towards_end'
           ? line.stations[totalStations - 1].name

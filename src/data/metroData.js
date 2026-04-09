@@ -88,6 +88,6 @@ export const metroSchedule = {
   },
 };
 
-export const travelTimeBetweenStations = 2;
+export const travelTimeBetweenStations = 2.5;
 
 export default metroLines;

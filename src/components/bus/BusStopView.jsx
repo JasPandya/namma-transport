@@ -3,9 +3,11 @@ import { MapPin, Bus, RefreshCw, ArrowLeft, Loader2, Clock, Navigation } from 'l
 import { getActiveVehiclesForStop } from '../../services/busService';
 import * as bmtcApi from '../../services/bmtcApi';
 import ETABadge from '../common/ETABadge';
+import RouteMap from './RouteMap';
 
 export default function BusStopView({ stop, onBack }) {
   const [routes, setRoutes] = useState([]);
+  const [mapData, setMapData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -20,12 +22,21 @@ export default function BusStopView({ stop, onBack }) {
     try {
       const details = await bmtcApi.getRouteDetails(routeContext.routeParentId);
       const dir = routeContext.direction || 'up';
-      const allStops = [...(details[dir]?.stops || [])];
+      const dirData = details[dir] || { stops: [], vehicles: [] };
+      const allStops = [...(dirData.stops || [])];
       const matchingStop = allStops.find(
         (s) => s.stationId === stationId || s.stationName === stationName
       ) || allStops.find(
         (s) => s.stationName.toLowerCase().includes(stationName.toLowerCase())
       );
+
+      // Store full route data for the map
+      setMapData({
+        stops: allStops,
+        vehicles: dirData.vehicles || [],
+        routeNo: routeContext.routeNo,
+      });
+
       if (matchingStop) {
         return {
           routeNo: routeContext.routeNo,
@@ -160,6 +171,15 @@ export default function BusStopView({ stop, onBack }) {
           <RefreshCw className={`w-4 h-4 text-slate-400 ${refreshing ? 'animate-spin' : ''}`} />
         </button>
       </div>
+
+      {mapData && !loading && (
+        <RouteMap
+          stops={mapData.stops}
+          vehicles={mapData.vehicles}
+          selectedStopId={stationId}
+          routeNo={mapData.routeNo}
+        />
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-12 gap-2 text-slate-400">

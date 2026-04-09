@@ -3,7 +3,9 @@ import { MapPin, Route, Bus, Loader2 } from 'lucide-react';
 import SearchBar from '../common/SearchBar';
 import BusRouteSearch from './BusRouteSearch';
 import BusStopView from './BusStopView';
+import FavoriteRoutes from './FavoriteRoutes';
 import { searchStops } from '../../services/busService';
+import useFavorites from '../../hooks/useFavorites';
 
 function getSession(key, fallback) {
   try {
@@ -25,7 +27,9 @@ export default function BusPanel() {
   const [stopSuggestions, setStopSuggestions] = useState([]);
   const [searchingStops, setSearchingStops] = useState(false);
   const [activeSearchMode, setActiveSearchMode] = useState(() => getSession('nt:bus:searchMode', 'route'));
+  const [favoriteQuery, setFavoriteQuery] = useState('');
   const debounceRef = useRef(null);
+  const { favorites, addFavorite, removeFavorite, isFavorite } = useFavorites();
 
   const doStopSearch = useCallback(async (q) => {
     if (!q || q.trim().length < 3) {
@@ -75,6 +79,15 @@ export default function BusPanel() {
 
   return (
     <div className="space-y-4">
+      <FavoriteRoutes
+        favorites={favorites}
+        onSelectRoute={(fav) => {
+          handleSearchModeChange('route');
+          setFavoriteQuery(fav.routeNo);
+        }}
+        onRemoveFavorite={removeFavorite}
+      />
+
       <div className="flex gap-2">
         <button
           onClick={() => handleSearchModeChange('route')}
@@ -101,7 +114,13 @@ export default function BusPanel() {
       </div>
 
       {activeSearchMode === 'route' ? (
-        <BusRouteSearch onSelectStop={handleSelectStop} />
+        <BusRouteSearch
+          onSelectStop={handleSelectStop}
+          addFavorite={addFavorite}
+          removeFavorite={removeFavorite}
+          isFavorite={isFavorite}
+          defaultQuery={favoriteQuery}
+        />
       ) : (
         <div className="space-y-4">
           <SearchBar

@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { MapPin, ArrowRight, Loader2, Bus, ArrowUpDown } from 'lucide-react';
+import { MapPin, ArrowRight, Loader2, Bus, ArrowUpDown, Star } from 'lucide-react';
 import { searchRoutes, getRouteDetails, getActiveVehiclesForStop } from '../../services/busService';
 import ETABadge from '../common/ETABadge';
 
-export default function BusRouteSearch({ onSelectStop }) {
-  const [query, setQuery] = useState('');
+export default function BusRouteSearch({ onSelectStop, addFavorite, removeFavorite, isFavorite, defaultQuery }) {
+  const [query, setQuery] = useState(defaultQuery || '');
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [expandedRoute, setExpandedRoute] = useState(null);
@@ -32,6 +32,12 @@ export default function BusRouteSearch({ onSelectStop }) {
     debounceRef.current = setTimeout(() => doSearch(query), 400);
     return () => clearTimeout(debounceRef.current);
   }, [query, doSearch]);
+
+  useEffect(() => {
+    if (defaultQuery && defaultQuery !== query) {
+      setQuery(defaultQuery);
+    }
+  }, [defaultQuery]);
 
   const handleExpandRoute = async (route) => {
     if (expandedRoute === route.routeParentId) {
@@ -108,7 +114,30 @@ export default function BusRouteSearch({ onSelectStop }) {
                       {route.routeNo}
                     </span>
                   </div>
-                  <ArrowRight className={`w-4 h-4 text-slate-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                  <div className="flex items-center gap-2">
+                    {isFavorite && (
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isFavorite(route.routeParentId)) {
+                            removeFavorite(route.routeParentId);
+                          } else {
+                            addFavorite(route);
+                          }
+                        }}
+                        className="p-1 rounded-lg hover:bg-surface-hover transition-colors"
+                      >
+                        <Star className={`w-4 h-4 transition-colors ${
+                          isFavorite(route.routeParentId)
+                            ? 'text-yellow-400 fill-yellow-400'
+                            : 'text-slate-500 hover:text-slate-300'
+                        }`} />
+                      </span>
+                    )}
+                    <ArrowRight className={`w-4 h-4 text-slate-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                  </div>
                 </div>
               </button>
 

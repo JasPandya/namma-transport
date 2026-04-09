@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Dark background with rounded corners -->
+  <rect width="512" height="512" rx="96" fill="#0f172a"/>
+
+  <!-- Bus body -->
+  <rect x="116" y="76" width="280" height="360" rx="44" fill="#f97316"/>
+
+  <!-- Windshield -->
+  <rect x="156" y="116" width="200" height="130" rx="20" fill="#0f172a"/>
+
+  <!-- Route display bar -->
+  <rect x="180" y="280" width="152" height="40" rx="10" fill="#0f172a"/>
+
+  <!-- Left headlight -->
+  <circle cx="184" cy="372" r="26" fill="#fef3c7"/>
+
+  <!-- Right headlight -->
+  <circle cx="328" cy="372" r="26" fill="#fef3c7"/>
+</svg>

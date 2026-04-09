@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <!-- Solid dark background (no transparency for Apple) -->
+  <rect width="180" height="180" fill="#0f172a"/>
+
+  <!-- Bus body -->
+  <rect x="41" y="27" width="98" height="126" rx="16" fill="#f97316"/>
+
+  <!-- Windshield -->
+  <rect x="55" y="41" width="70" height="46" rx="7" fill="#0f172a"/>
+
+  <!-- Route display bar -->
+  <rect x="63" y="99" width="54" height="14" rx="4" fill="#0f172a"/>
+
+  <!-- Left headlight -->
+  <circle cx="65" cy="131" r="9" fill="#fef3c7"/>
+
+  <!-- Right headlight -->
+  <circle cx="115" cy="131" r="9" fill="#fef3c7"/>
+</svg>

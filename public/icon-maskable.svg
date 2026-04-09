@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Full canvas dark background for maskable area -->
+  <rect width="512" height="512" fill="#0f172a"/>
+
+  <!-- Bus body (scaled to ~60% center safe zone) -->
+  <rect x="147" y="115" width="218" height="282" rx="34" fill="#f97316"/>
+
+  <!-- Windshield -->
+  <rect x="178" y="146" width="156" height="102" rx="16" fill="#0f172a"/>
+
+  <!-- Route display bar -->
+  <rect x="197" y="275" width="118" height="31" rx="8" fill="#0f172a"/>
+
+  <!-- Left headlight -->
+  <circle cx="200" cy="347" r="20" fill="#fef3c7"/>
+
+  <!-- Right headlight -->
+  <circle cx="312" cy="347" r="20" fill="#fef3c7"/>
+</svg>

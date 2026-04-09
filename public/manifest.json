@@ -1,0 +1,25 @@
+{
+  "name": "Namma Transport - Bangalore Bus & Metro Tracker",
+  "short_name": "Namma Transport",
+  "description": "Track BMTC buses with live ETAs and Namma Metro schedules in Bangalore",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "categories": ["transportation", "travel"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

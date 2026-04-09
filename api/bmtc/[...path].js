@@ -1,65 +1,49 @@
-import https from 'node:https';
+export const config = {
+  runtime: 'edge',
+};
 
-export default async function handler(req, res) {
-  const pathSegments = req.query.path || [];
-  const endpoint = pathSegments.join('/');
+export default async function handler(request) {
+  const url = new URL(request.url);
+  // Extract the BMTC endpoint from the path: /api/bmtc/SearchRoute_v2 -> SearchRoute_v2
+  const endpoint = url.pathname.replace(/^\/api\/bmtc\/?/, '');
+  const targetUrl = `https://bmtcmobileapi.karnataka.gov.in/WebAPI/${endpoint}`;
 
-  // Forward only relevant custom headers from the client
+  // Forward relevant custom headers
   const forwardHeaders = {};
-  if (req.headers['lan']) forwardHeaders['lan'] = req.headers['lan'];
-  if (req.headers['devicetype']) forwardHeaders['deviceType'] = req.headers['devicetype'];
+  const lan = request.headers.get('lan');
+  const deviceType = request.headers.get('devicetype');
+  if (lan) forwardHeaders['lan'] = lan;
+  if (deviceType) forwardHeaders['deviceType'] = deviceType;
 
-  const body = req.method !== 'GET' ? JSON.stringify(req.body) : null;
-
-  const headers = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json, text/plain, */*',
-    'Origin': 'https://nammabmtcapp.karnataka.gov.in',
-    'Referer': 'https://nammabmtcapp.karnataka.gov.in/',
-    'User-Agent':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    ...forwardHeaders,
-  };
-
-  if (body) {
-    headers['Content-Length'] = Buffer.byteLength(body);
-  }
-
-  const options = {
-    hostname: 'bmtcmobileapi.karnataka.gov.in',
-    port: 443,
-    path: `/WebAPI/${endpoint}`,
-    method: req.method,
-    headers,
-  };
+  const body = request.method !== 'GET' ? await request.text() : null;
 
   try {
-    const data = await new Promise((resolve, reject) => {
-      const proxyReq = https.request(options, (proxyRes) => {
-        let chunks = '';
-        proxyRes.on('data', (chunk) => { chunks += chunk; });
-        proxyRes.on('end', () => {
-          try {
-            resolve({ status: proxyRes.statusCode, body: JSON.parse(chunks) });
-          } catch {
-            reject(new Error(`Invalid JSON from BMTC API: ${chunks.slice(0, 200)}`));
-          }
-        });
-      });
-
-      proxyReq.on('error', reject);
-      proxyReq.setTimeout(15000, () => {
-        proxyReq.destroy();
-        reject(new Error('BMTC API request timed out'));
-      });
-
-      if (body) proxyReq.write(body);
-      proxyReq.end();
+    const response = await fetch(targetUrl, {
+      method: request.method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json, text/plain, */*',
+        'Origin': 'https://nammabmtcapp.karnataka.gov.in',
+        'Referer': 'https://nammabmtcapp.karnataka.gov.in/',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        ...forwardHeaders,
+      },
+      body,
     });
 
-    res.status(data.status).json(data.body);
+    const data = await response.text();
+    return new Response(data, {
+      status: response.status,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
   } catch (err) {
-    console.error('BMTC proxy error:', err.message);
-    res.status(502).json({ error: 'Failed to reach BMTC API', detail: err.message });
+    return new Response(JSON.stringify({ error: 'Failed to reach BMTC API', detail: err.message }), {
+      status: 502,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }

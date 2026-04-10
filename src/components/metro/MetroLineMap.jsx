@@ -1,11 +1,23 @@
 import { ArrowRight } from 'lucide-react';
 
 export default function MetroLineMap({ line, stations, selectedStation, onSelectStation }) {
-  const lineColor = line === 'purple' ? '#9333ea' : '#16a34a';
-  const lineBg = line === 'purple' ? 'bg-purple-600' : 'bg-green-600';
-  const lineText = line === 'purple' ? 'text-purple-400' : 'text-green-400';
-  const lineBorder = line === 'purple' ? 'border-purple-600/30' : 'border-green-600/30';
-  const lineHoverBg = line === 'purple' ? 'hover:bg-purple-600/10' : 'hover:bg-green-600/10';
+  const lineColor = line === 'purple' ? '#9333ea' : line === 'green' ? '#16a34a' : '#eab308';
+  const lineBg = line === 'purple' ? 'bg-purple-600' : line === 'green' ? 'bg-green-600' : 'bg-yellow-500';
+  const lineText = line === 'purple' ? 'text-purple-400' : line === 'green' ? 'text-green-400' : 'text-yellow-400';
+  const lineHoverBg = line === 'purple' ? 'hover:bg-purple-600/10' : line === 'green' ? 'hover:bg-green-600/10' : 'hover:bg-yellow-500/10';
+
+  const selectedClass =
+    line === 'purple' ? 'bg-purple-600/15 border-purple-600/30'
+    : line === 'green' ? 'bg-green-600/15 border-green-600/30'
+    : 'bg-yellow-500/15 border-yellow-500/30';
+
+  const interchangeBadge = (ic) => {
+    if (ic === 'purple') return 'bg-purple-600/20 text-purple-400';
+    if (ic === 'green') return 'bg-green-600/20 text-green-400';
+    return 'bg-yellow-500/20 text-yellow-400';
+  };
+  const interchangeLabel = (ic) =>
+    ic === 'purple' ? 'Purple' : ic === 'green' ? 'Green' : 'Yellow';
 
   return (
     <div className="space-y-1">
@@ -20,7 +32,7 @@ export default function MetroLineMap({ line, stations, selectedStation, onSelect
             onClick={() => onSelectStation(station.id)}
             className={`w-full flex items-center gap-3 py-2 px-3 rounded-lg transition-all cursor-pointer group ${
               isSelected
-                ? `${line === 'purple' ? 'bg-purple-600/15 border-purple-600/30' : 'bg-green-600/15 border-green-600/30'} border`
+                ? `${selectedClass} border`
                 : `border border-transparent ${lineHoverBg}`
             }`}
           >
@@ -50,10 +62,8 @@ export default function MetroLineMap({ line, stations, selectedStation, onSelect
                   {station.name}
                 </span>
                 {hasInterchange && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                    station.interchange === 'purple' ? 'bg-purple-600/20 text-purple-400' : 'bg-green-600/20 text-green-400'
-                  }`}>
-                    {station.interchange === 'purple' ? 'Purple' : 'Green'}
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${interchangeBadge(station.interchange)}`}>
+                    {interchangeLabel(station.interchange)}
                   </span>
                 )}
               </div>

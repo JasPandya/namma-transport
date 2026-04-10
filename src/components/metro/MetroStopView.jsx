@@ -51,11 +51,11 @@ export default function MetroStopView({ stationId, onBack }) {
     );
   }
 
-  const lineColor = station.line === 'purple' ? 'text-purple-400' : 'text-green-400';
-  const lineHex = station.line === 'purple' ? '#9333ea' : '#16a34a';
-  const lineBg = station.line === 'purple' ? 'bg-purple-600' : 'bg-green-600';
-  const lineBorder = station.line === 'purple' ? 'border-purple-600/30' : 'border-green-600/30';
-  const lineBgLight = station.line === 'purple' ? 'bg-purple-600/10' : 'bg-green-600/10';
+  const lineColor = station.line === 'purple' ? 'text-purple-400' : station.line === 'green' ? 'text-green-400' : 'text-yellow-400';
+  const lineHex = station.line === 'purple' ? '#9333ea' : station.line === 'green' ? '#16a34a' : '#eab308';
+  const lineBg = station.line === 'purple' ? 'bg-purple-600' : station.line === 'green' ? 'bg-green-600' : 'bg-yellow-500';
+  const lineBorder = station.line === 'purple' ? 'border-purple-600/30' : station.line === 'green' ? 'border-green-600/30' : 'border-yellow-500/30';
+  const lineBgLight = station.line === 'purple' ? 'bg-purple-600/10' : station.line === 'green' ? 'bg-green-600/10' : 'bg-yellow-500/10';
 
   const renderTrainList = (trains, dirLabel) => {
     if (trains.length === 0) {
@@ -170,8 +170,12 @@ export default function MetroStopView({ stationId, onBack }) {
       {station.interchange && (
         <div className={`${lineBgLight} border ${lineBorder} rounded-xl p-3 text-xs`}>
           <span className="text-slate-300">Interchange station - connect to </span>
-          <span className={station.interchange === 'purple' ? 'text-purple-400 font-medium' : 'text-green-400 font-medium'}>
-            {station.interchange === 'purple' ? 'Purple Line' : 'Green Line'}
+          <span className={
+            station.interchange === 'purple' ? 'text-purple-400 font-medium'
+            : station.interchange === 'green' ? 'text-green-400 font-medium'
+            : 'text-yellow-400 font-medium'
+          }>
+            {station.interchange === 'purple' ? 'Purple Line' : station.interchange === 'green' ? 'Green Line' : 'Yellow Line'}
           </span>
         </div>
       )}

@@ -33,7 +33,7 @@ export default function FavoriteRoutes({ favorites, onSelectRoute, onRemoveFavor
                   onRemoveFavorite(fav.routeParentId);
                 }
               }}
-              className="ml-0.5 p-0.5 rounded hover:bg-bus-orange/30 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="ml-0.5 p-0.5 rounded hover:bg-bus-orange/30 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity"
             >
               <X className="w-3 h-3" />
             </span>

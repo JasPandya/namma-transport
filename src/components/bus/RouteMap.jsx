@@ -33,17 +33,20 @@ function createBusIcon(heading = 0) {
 }
 
 /**
- * Helper component that auto-fits the map bounds whenever the
- * set of visible coordinates changes.
+ * Helper component that auto-fits the map bounds once on mount.
+ * Subsequent data refreshes (e.g. vehicle position updates) do NOT
+ * re-zoom, so the user's manual zoom/pan is preserved.
  */
 function FitBounds({ coords }) {
   const map = useMap();
+  const hasFitted = useRef(false);
 
   useEffect(() => {
-    if (coords.length === 0) return;
+    if (coords.length === 0 || hasFitted.current) return;
 
     const bounds = L.latLngBounds(coords.map(([lat, lng]) => [lat, lng]));
     map.fitBounds(bounds, { padding: [24, 24], maxZoom: 16 });
+    hasFitted.current = true;
   }, [coords, map]);
 
   return null;

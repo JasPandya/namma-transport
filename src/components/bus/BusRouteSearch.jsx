@@ -3,7 +3,7 @@ import { MapPin, ArrowRight, Loader2, Bus, ArrowUpDown, Star } from 'lucide-reac
 import { searchRoutes, getRouteDetails, getActiveVehiclesForStop } from '../../services/busService';
 import ETABadge from '../common/ETABadge';
 
-export default function BusRouteSearch({ onSelectStop, addFavorite, removeFavorite, isFavorite, defaultQuery }) {
+export default function BusRouteSearch({ onSelectStop, addFavorite, removeFavorite, isFavorite, defaultQuery, autoExpand }) {
   const [query, setQuery] = useState(defaultQuery || '');
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -38,6 +38,24 @@ export default function BusRouteSearch({ onSelectStop, addFavorite, removeFavori
       setQuery(defaultQuery);
     }
   }, [defaultQuery]);
+
+  // Auto-expand a route when triggered from favorites
+  useEffect(() => {
+    if (!autoExpand?.id || results.length === 0) return;
+    if (expandedRoute === autoExpand.id) return; // already expanded
+    const match = results.find((r) => r.routeParentId === autoExpand.id);
+    if (match) {
+      setExpandedRoute(autoExpand.id);
+      setLoadingRoute(true);
+      setActiveDirection('up');
+      getRouteDetails(autoExpand.id)
+        .then((data) => {
+          setRouteData(data);
+          setLoadingRoute(false);
+        })
+        .catch(() => setLoadingRoute(false));
+    }
+  }, [autoExpand, results, expandedRoute]);
 
   const handleExpandRoute = async (route) => {
     if (expandedRoute === route.routeParentId) {

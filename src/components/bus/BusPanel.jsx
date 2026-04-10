@@ -28,6 +28,7 @@ export default function BusPanel() {
   const [searchingStops, setSearchingStops] = useState(false);
   const [activeSearchMode, setActiveSearchMode] = useState(() => getSession('nt:bus:searchMode', 'route'));
   const [favoriteQuery, setFavoriteQuery] = useState('');
+  const [autoExpand, setAutoExpand] = useState(null);
   const debounceRef = useRef(null);
   const viewRef = useRef(view);
   const { favorites, addFavorite, removeFavorite, isFavorite } = useFavorites();
@@ -108,6 +109,7 @@ export default function BusPanel() {
           onSelectRoute={(fav) => {
             handleSearchModeChange('route');
             setFavoriteQuery(fav.routeNo);
+            setAutoExpand({ id: fav.routeParentId, ts: Date.now() });
           }}
           onRemoveFavorite={removeFavorite}
         />
@@ -144,6 +146,7 @@ export default function BusPanel() {
             removeFavorite={removeFavorite}
             isFavorite={isFavorite}
             defaultQuery={favoriteQuery}
+            autoExpand={autoExpand}
           />
         ) : (
           <div className="space-y-4">

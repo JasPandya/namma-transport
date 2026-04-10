@@ -140,7 +140,9 @@ export default function BusStopView({ stop, onBack }) {
   useEffect(() => {
     fetchRoutes();
     const interval = setInterval(() => fetchRoutes(true), 30000);
-    return () => clearInterval(interval);
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchRoutes(true); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { clearInterval(interval); document.removeEventListener('visibilitychange', onVisible); };
   }, [stationName]);
 
   return (

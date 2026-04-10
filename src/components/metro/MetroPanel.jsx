@@ -8,7 +8,7 @@ import MetroStopView from './MetroStopView';
 
 function getSession(key, fallback) {
   try {
-    const val = sessionStorage.getItem(key);
+    const val = localStorage.getItem(key);
     return val ? JSON.parse(val) : fallback;
   } catch {
     return fallback;
@@ -16,7 +16,7 @@ function getSession(key, fallback) {
 }
 
 function setSession(key, value) {
-  sessionStorage.setItem(key, JSON.stringify(value));
+  localStorage.setItem(key, JSON.stringify(value));
 }
 
 export default function MetroPanel() {

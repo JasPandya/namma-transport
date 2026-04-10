@@ -3,8 +3,13 @@ import { MapPin, ArrowRight, Loader2, Bus, ArrowUpDown, Star } from 'lucide-reac
 import { searchRoutes, getRouteDetails, getActiveVehiclesForStop } from '../../services/busService';
 import ETABadge from '../common/ETABadge';
 
+function stored(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch { return fallback; }
+}
+
 export default function BusRouteSearch({ onSelectStop, addFavorite, removeFavorite, isFavorite, defaultQuery, autoExpand }) {
-  const [query, setQuery] = useState(defaultQuery || '');
+  const [query, setQuery] = useState(defaultQuery || stored('nt:bus:routeQuery', ''));
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [expandedRoute, setExpandedRoute] = useState(null);
@@ -12,6 +17,7 @@ export default function BusRouteSearch({ onSelectStop, addFavorite, removeFavori
   const [loadingRoute, setLoadingRoute] = useState(false);
   const [activeDirection, setActiveDirection] = useState('up');
   const debounceRef = useRef(null);
+  const restoredRef = useRef(false);
 
   const doSearch = useCallback(async (q) => {
     if (q.trim().length === 0) {
@@ -32,6 +38,27 @@ export default function BusRouteSearch({ onSelectStop, addFavorite, removeFavori
     debounceRef.current = setTimeout(() => doSearch(query), 400);
     return () => clearTimeout(debounceRef.current);
   }, [query, doSearch]);
+
+  // Persist query to localStorage when it changes
+  useEffect(() => { localStorage.setItem('nt:bus:routeQuery', JSON.stringify(query)); }, [query]);
+
+  // Restore expanded route after initial search results load (e.g. after app resume)
+  useEffect(() => {
+    if (restoredRef.current || results.length === 0) return;
+    restoredRef.current = true;
+    const savedRoute = stored('nt:bus:expandedRoute', null);
+    const savedDir = stored('nt:bus:routeDir', 'up');
+    if (!savedRoute) return;
+    const match = results.find((r) => r.routeParentId === savedRoute);
+    if (match) {
+      setExpandedRoute(savedRoute);
+      setActiveDirection(savedDir);
+      setLoadingRoute(true);
+      getRouteDetails(savedRoute)
+        .then((data) => { setRouteData(data); setLoadingRoute(false); })
+        .catch(() => setLoadingRoute(false));
+    }
+  }, [results]);
 
   useEffect(() => {
     if (defaultQuery && defaultQuery !== query) {
@@ -61,11 +88,14 @@ export default function BusRouteSearch({ onSelectStop, addFavorite, removeFavori
     if (expandedRoute === route.routeParentId) {
       setExpandedRoute(null);
       setRouteData(null);
+      localStorage.removeItem('nt:bus:expandedRoute');
       return;
     }
     setExpandedRoute(route.routeParentId);
     setLoadingRoute(true);
     setActiveDirection('up');
+    localStorage.setItem('nt:bus:expandedRoute', JSON.stringify(route.routeParentId));
+    localStorage.setItem('nt:bus:routeDir', JSON.stringify('up'));
     try {
       const data = await getRouteDetails(route.routeParentId);
       setRouteData(data);
@@ -88,7 +118,9 @@ export default function BusRouteSearch({ onSelectStop, addFavorite, removeFavori
   useEffect(() => {
     if (!expandedRoute) return;
     const interval = setInterval(refreshRoute, 30000);
-    return () => clearInterval(interval);
+    const onVisible = () => { if (document.visibilityState === 'visible') refreshRoute(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { clearInterval(interval); document.removeEventListener('visibilitychange', onVisible); };
   }, [expandedRoute]);
 
   const currentStops = routeData?.[activeDirection]?.stops || [];
@@ -170,7 +202,7 @@ export default function BusRouteSearch({ onSelectStop, addFavorite, removeFavori
                     <>
                       <div className="flex items-center gap-2 mb-3">
                         <button
-                          onClick={() => setActiveDirection('up')}
+                          onClick={() => { setActiveDirection('up'); localStorage.setItem('nt:bus:routeDir', JSON.stringify('up')); }}
                           className={`flex-1 text-xs font-medium py-1.5 px-3 rounded-lg transition-all cursor-pointer ${
                             activeDirection === 'up'
                               ? 'bg-bus-orange/20 text-bus-orange border border-bus-orange/30'
@@ -180,7 +212,7 @@ export default function BusRouteSearch({ onSelectStop, addFavorite, removeFavori
                           UP ({routeData?.up?.stops?.[0]?.from || ''} → {routeData?.up?.stops?.[0]?.to || ''})
                         </button>
                         <button
-                          onClick={() => setActiveDirection('down')}
+                          onClick={() => { setActiveDirection('down'); localStorage.setItem('nt:bus:routeDir', JSON.stringify('down')); }}
                           className={`flex-1 text-xs font-medium py-1.5 px-3 rounded-lg transition-all cursor-pointer ${
                             activeDirection === 'down'
                               ? 'bg-bus-orange/20 text-bus-orange border border-bus-orange/30'

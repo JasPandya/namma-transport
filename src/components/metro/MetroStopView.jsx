@@ -27,7 +27,9 @@ export default function MetroStopView({ stationId, onBack }) {
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchData(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { clearInterval(interval); document.removeEventListener('visibilitychange', onVisible); };
   }, [stationId]);
 
   const handleSetReminder = async (train) => {

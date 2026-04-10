@@ -5,9 +5,9 @@ import BusPanel from './components/bus/BusPanel';
 import MetroPanel from './components/metro/MetroPanel';
 import useReminder from './hooks/useReminder';
 
-function getSessionState(key, fallback) {
+function getStored(key, fallback) {
   try {
-    const val = sessionStorage.getItem(key);
+    const val = localStorage.getItem(key);
     return val ? JSON.parse(val) : fallback;
   } catch {
     return fallback;
@@ -15,12 +15,12 @@ function getSessionState(key, fallback) {
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState(() => getSessionState('nt:activeTab', 'bus'));
+  const [activeTab, setActiveTab] = useState(() => getStored('nt:activeTab', 'bus'));
   const { activeReminders } = useReminder();
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    sessionStorage.setItem('nt:activeTab', JSON.stringify(tab));
+    localStorage.setItem('nt:activeTab', JSON.stringify(tab));
   };
 
   return (

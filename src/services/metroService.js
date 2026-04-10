@@ -41,7 +41,7 @@ function getFrequencyAtTime(minutesSinceMidnight) {
 
 export function getTrainETAs(stationId, direction = 'both') {
   const now = new Date();
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
   const schedule = getScheduleForToday();
   const firstTrain = parseTime(schedule.firstTrain);
   const lastTrain = parseTime(schedule.lastTrain);
@@ -64,33 +64,36 @@ export function getTrainETAs(stationId, direction = 'both') {
 
   const line = metroLines[lineId];
   const totalStations = line.stations.length;
-  const frequency = getFrequencyAtTime(currentMinutes);
+  const frequency = getFrequencyAtTime(Math.floor(currentMinutes));
 
   const generateForDirection = (dirLabel, stIdx) => {
     const offset = stIdx * travelTimeBetweenStations;
+    // Trains arrive at this station at: offset + k*frequency (k = 0, 1, 2, ...)
+    // Find the first k where arrival >= currentMinutes
+    const kMin = Math.max(0, Math.ceil((currentMinutes - offset) / frequency));
     const trains = [];
     for (let i = 0; i < 6; i++) {
-      const baseEta = (frequency * i) - (currentMinutes % frequency) + (offset % frequency);
-      const eta = Math.max(1, Math.round(baseEta));
-      if (eta < 90) {
-        const destination = dirLabel === 'towards_end'
-          ? line.stations[totalStations - 1].name
-          : line.stations[0].name;
-        trains.push({
-          id: `${lineId}-${dirLabel}-${i}`,
-          line: lineId,
-          lineName: line.name,
-          lineColor: line.color,
-          direction: dirLabel,
-          destination,
-          eta,
-          scheduledTime: formatTime(currentMinutes + eta),
-          platform: dirLabel === 'towards_end' ? 1 : 2,
-          coaches: lineId === 'purple' ? 6 : 6,
-        });
-      }
+      const arrivalMinute = offset + (kMin + i) * frequency;
+      const eta = arrivalMinute - currentMinutes;
+      if (eta < 0.5) continue;
+      if (eta >= 90) break;
+      const destination = dirLabel === 'towards_end'
+        ? line.stations[totalStations - 1].name
+        : line.stations[0].name;
+      trains.push({
+        id: `${lineId}-${dirLabel}-${kMin + i}`,
+        line: lineId,
+        lineName: line.name,
+        lineColor: line.color,
+        direction: dirLabel,
+        destination,
+        eta: Math.round(eta),
+        scheduledTime: formatTime(Math.round(arrivalMinute)),
+        platform: dirLabel === 'towards_end' ? 1 : 2,
+        coaches: 6,
+      });
     }
-    return trains.sort((a, b) => a.eta - b.eta);
+    return trains;
   };
 
   const result = {};
@@ -104,11 +107,12 @@ export function getTrainETAs(stationId, direction = 'both') {
 }
 
 function formatTime(totalMinutes) {
-  const h = Math.floor(totalMinutes / 60) % 24;
-  const m = totalMinutes % 60;
+  const rounded = Math.round(totalMinutes);
+  const h = Math.floor(rounded / 60) % 24;
+  const m = rounded % 60;
   const period = h >= 12 ? 'PM' : 'AM';
   const displayH = h % 12 || 12;
-  return `${displayH}:${String(Math.round(m)).padStart(2, '0')} ${period}`;
+  return `${displayH}:${String(m).padStart(2, '0')} ${period}`;
 }
 
 export function getTravelTime(fromStationId, toStationId) {
